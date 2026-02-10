@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleskop Führerschein Quiz</title>
+<style>
+body{font-family:Arial;margin:0;color:white;background:radial-gradient(circle at 20% 20%, #1b2a49, #0b1020 60%, #000);min-height:100vh;}
+.container{max-width:900px;margin:auto;padding:30px;}
+h1{text-align:center;}
+.card{background:rgba(255,255,255,0.95);color:black;padding:25px;border-radius:15px;margin-top:20px;box-shadow:0 0 25px rgba(255,255,255,0.15);}
+button{padding:10px 18px;border-radius:8px;border:none;cursor:pointer;margin:8px;font-size:15px;}
+.hidden{display:none;}
+label{display:block;margin:6px 0;}
+input[type=text]{padding:10px;font-size:16px;width:80%;}
+.progress{font-weight:bold;margin-bottom:10px;}
+.footer{text-align:center;margin-top:40px;opacity:0.6;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔭 Teleskop Führerschein</h1>
+
+<div id="startScreen" class="card" style="text-align:center">
+<h2>Quiz starten</h2>
+<p>Gib deinen Namen ein:</p>
+<input id="nameInput" type="text" placeholder="Dein Name"><br>
+<button type="button" id="startBtn">Start</button>
+</div>
+
+<div id="quizScreen" class="hidden card">
+<div class="progress" id="progressText"></div>
+<h3 id="questionText"></h3>
+<form id="answers"></form>
+<div style="text-align:center">
+<button type="button" id="backBtn">⬅ Zurück</button>
+<button type="button" id="nextBtn">Weiter ➡</button>
+</div>
+</div>
+
+<div id="resultScreen" class="hidden card" style="text-align:center">
+<h2 id="resultText"></h2>
+<button type="button" id="printBtn" class="hidden">📄 Zertifikat drucken</button><br>
+<button type="button" onclick="location.reload()">Neu starten</button>
+</div>
+
+<div class="footer">✨ Viel Erfolg beim Beobachten des Sternenhimmels ✨</div>
+</div>
+
+<script>
+let playerName="",current=0,score=0,userAnswers=[];
+
+const questions=[
+{q:"Wofür wird ein Teleskop hauptsächlich verwendet?",a:["Zum Beobachten von Himmelsobjekten","Zum Messen von Temperaturen","Zum Fotografieren von Tieren","Zum Erstellen von 3D‑Modellen"],correct:[0]},
+{q:"Welche Komponente sammelt das Licht im Teleskop?",a:["Okular","Hauptspiegel oder Objektiv","Stativ","Sucherfernrohr"],correct:[1]},
+{q:"Wofür dient das Okular?",a:["Zum Vergrößern des Bildes","Zum Ausrichten des Teleskops","Zum Stabilisieren des Stativs","Zum Messen der Entfernung"],correct:[0]},
+{q:"Warum sollte ein Teleskop vor der Beobachtung abkühlen?",a:["Damit die Optik stabil wird","Damit es leichter wird","Damit es heller leuchtet","Damit das Stativ nicht wackelt"],correct:[0]},
+{q:"Was bedeutet die Öffnung eines Teleskops?",a:["Die Länge des Stativs","Der Durchmesser des Hauptspiegels/Objektivs","Die Größe des Okulars","Die Anzahl der Schrauben"],correct:[1]},
+{q:"Was beschreibt die Brennweite eines Teleskops?",a:["Wie weit das Teleskop werfen kann","Wie stark das Bild vergrößert wird","Den Abstand zwischen Spiegel und Okular","Die Farbe des Teleskops"],correct:[1]},
+{q:"Wofür nutzt man ein Sucherfernrohr?",a:["Zum leichteren Finden von Objekten","Zum Vergrößern","Zum Scharfstellen","Zum Stabilisieren"],correct:[0]},
+{q:"Was passiert, wenn man zu stark vergrößert?",a:["Das Bild wird dunkler und unscharf","Das Bild wird heller","Das Teleskop wird schwerer","Die Farben werden kräftiger"],correct:[0]},
+{q:"Welche Himmelsobjekte sind besonders hell und leicht zu finden?",a:["Mond und Jupiter","Neptun und ferne Galaxien","Schwarze Löcher","Asteroiden im Kuipergürtel"],correct:[0]},
+{q:"Was ist das Celestron-8 Teleskop (orange) für ein Typ?",a:["Spiegelteleskop (Reflektor)","Linsenteleskop (Refraktor)","Katadioptrisches Teleskop"],correct:[2]},
+{q:"Was sind gute Bedingungen für die Himmelsbeobachtung?",a:["Dunkler Himmel ohne Lichtverschmutzung","Klarer, trockener Himmel ohne Wolken","Ruhige Atmosphäre (gutes Seeing)","Heller Vollmond direkt über dir"],correct:[0,1,2]},
+{q:"Was bedeutet „Justieren“ (Kollimation)?",a:["Das Teleskop anmalen","Die Spiegel richtig ausrichten","Das Stativ verlängern","Das Okular reinigen"],correct:[1]},
+{q:"Warum ist ein stabiles Stativ wichtig?",a:["Damit das Bild nicht wackelt","Damit das Teleskop leichter wird","Damit es bunter aussieht","Damit es schneller wird"],correct:[0]},
+{q:"Wie finde ich heraus, was ich beobachten kann?",a:["Mit einem gewöhnlichen Magnet-Kompass","Mithilfe einer Sternkarten-App","Tonights-Best Website","Via Horoskopdeutung in Astrologie-Büchern"],correct:[1,2]},
+{q:"Warum darf man niemals ohne Sonnenfilter durch das Teleskop in die Sonne schauen?",a:["Eigentlich nicht gefährlich","Man könnte erblinden","Die Lichtstrahlen werden gebündelt und schaden so dem Auge"],correct:[1]},
+{q:"Wie berechnet man die Brennzahl?",a:["Brennweite × Öffnung","Brennweite + Öffnung","Brennweite ÷ Brennweite des Okulars","Brennweite ÷ Durchmesser des Okulars"],correct:[2]},
+{q:"Warum darf man niemals ohne Sonnenfilter durch das Teleskop in die Sonne schauen?",a:["Nie längere Zeit mit einem Auge durch das Teleskop sehen","niemals ohne Sonnenfilter beobachten","Stets sicherstellen, dass alle Komponenten korrekt montiert sind"],correct:[1,2]}
+];
+
+startBtn.onclick=()=>{
+playerName=nameInput.value.trim();
+if(!playerName){alert("Bitte Namen eingeben!");return;}
+startScreen.classList.add("hidden");
+quizScreen.classList.remove("hidden");
+showQuestion();
+};
+
+nextBtn.onclick=()=>{
+const sel=getSelected();
+if(sel.length===0){alert("Bitte zuerst beantworten!");return;}
+userAnswers[current]=sel;
+current++;
+if(current<questions.length)showQuestion();else finish();
+};
+
+backBtn.onclick=()=>{
+if(current>0){userAnswers[current]=getSelected();current--;showQuestion();}
+};
+
+printBtn.onclick=()=>{
+const w=window.open("");
+w.document.write("<h1 style='text-align:center'>Teleskop Führerschein</h1><p style='text-align:center;font-size:22px'>Bestanden von <b>"+playerName+"</b></p>");
+w.print();
+};
+
+function getSelected(){return [...document.querySelectorAll("input[name='ans']:checked")].map(x=>+x.value);}
+
+function showQuestion(){
+const q=questions[current];
+progressText.innerText="Frage "+(current+1)+" von "+questions.length;
+questionText.innerText=q.q;
+answers.innerHTML="";
+q.a.forEach((t,i)=>{
+const type=q.correct.length>1?"checkbox":"radio";
+const checked=(userAnswers[current]||[]).includes(i)?"checked":"";
+answers.innerHTML+=`<label><input type="${type}" name="ans" value="${i}" ${checked}> ${t}</label>`;
+});
+backBtn.disabled=(current===0);
+}
+
+function finish(){
+score=0;
+questions.forEach((q,i)=>{
+const a=(userAnswers[i]||[]).sort().toString();
+const c=[...q.correct].sort().toString();
+if(a===c)score++;
+});
+const percent=Math.round(score/questions.length*100);
+quizScreen.classList.add("hidden");
+resultScreen.classList.remove("hidden");
+if(percent>=75){
+resultText.innerText=playerName+" hat bestanden ("+percent+"%) 🚀";
+printBtn.classList.remove("hidden");
+}else{
+resultText.innerText="Nicht bestanden ("+percent+"%). 75% nötig.";
+}
+}
+</script>
+</body>
+</html>
